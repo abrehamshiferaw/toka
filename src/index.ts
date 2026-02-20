@@ -2,6 +2,7 @@ import { SDKConfig, SDKRequest, SDKResponse, Cache } from './types';
 import { callAPI } from './api/client';
 import { estimateCost } from './cost/estimator';
 import { createSampleConfig } from './config';
+import { getNextModel, getModelWithinBudget } from './fallback/modelFallback';
 
 /**
  * Main Toka SDK class
@@ -22,7 +23,7 @@ export class Toka {
   }
 
   /**
-   * Make a request to the AI API with cost estimation and caching
+   * Make a request to the AI API with cost estimation, caching, and automatic model fallback
    * @param model The AI model to use (must be in config.models)
    * @param prompt The text prompt to send to the AI model
    * @param options Optional additional parameters for the request
@@ -52,16 +53,23 @@ export class Toka {
         }
       }
 
-      // Estimate cost before making the API call
-      const costEstimate = estimateCost(prompt, model);
+      // Try to find the best model that fits within budget
+      const bestModel = getModelWithinBudget(prompt, this.config.models, this.config.maxCostPerRequest);
       
-      // Check if estimated cost exceeds maximum allowed
-      if (costEstimate.cost > this.config.maxCostPerRequest) {
-        throw new Error(`Estimated request cost ($${costEstimate.cost.toFixed(4)}) exceeds maximum allowed ($${this.config.maxCostPerRequest})`);
+      if (!bestModel) {
+        throw new Error(`All available models exceed the maximum cost per request ($${this.config.maxCostPerRequest}). Consider increasing the budget or using a shorter prompt.`);
       }
 
-      // Make the API call
-      const text = await callAPI(model, prompt, this.config.apiKey);
+      // If the requested model is not the best model (due to budget), log the fallback
+      if (bestModel !== model) {
+        console.log(`Model '${model}' exceeds budget. Falling back to '${bestModel}' for cost optimization.`);
+      }
+
+      // Estimate cost for the selected model
+      const costEstimate = estimateCost(prompt, bestModel);
+      
+      // Make the API call with the selected model
+      const text = await callAPI(bestModel, prompt, this.config.apiKey);
       
       // Create response object with estimated tokens and cost
       const tokens = costEstimate.tokens;
@@ -71,7 +79,7 @@ export class Toka {
         text,
         tokens,
         cost,
-        modelUsed: model,
+        modelUsed: bestModel, // Indicate which model was actually used
         cacheHit: false,
       };
 

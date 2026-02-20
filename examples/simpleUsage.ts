@@ -195,6 +195,81 @@ async function main() {
   console.log('• In-Memory caching with TTL support');
   console.log('• Cache integration in Toka SDK');
   console.log('• Cache hit/miss tracking in responses');
+  
+  // Phase 4: Auto Model Fallback Examples
+  console.log('\n🔄 Phase 4: Auto Model Fallback Examples');
+  
+  console.log('\n--- Model Fallback Demo ---');
+  const fallbackConfig = {
+    apiKey: 'test-api-key',
+    models: ['gpt-4', 'gpt-4o-mini', 'gpt-3.5-turbo'], // Model preference order
+    maxCostPerRequest: 0.00001, // Very low budget to trigger fallback
+    cacheTTL: 5000,
+  };
+  
+  const tokaWithFallback = new Toka(fallbackConfig);
+  const fallbackPrompt = 'Hello world';
+  
+  console.log('Making request with gpt-4 (should fallback due to budget)');
+  try {
+    const fallbackResponse = await tokaWithFallback.request('gpt-4', fallbackPrompt);
+    console.log(`✅ Request completed successfully!`);
+    console.log(`   Requested model: gpt-4`);
+    console.log(`   Model actually used: ${fallbackResponse.modelUsed}`);
+    console.log(`   Cost: $${fallbackResponse.cost.toFixed(6)}`);
+    console.log(`   Fallback occurred: ${fallbackResponse.modelUsed !== 'gpt-4'}`);
+  } catch (error) {
+    console.log(`❌ Error: ${error.message}`);
+  }
+  
+  console.log('\n--- Budget Exceeded Demo ---');
+  const veryLowBudgetConfig = {
+    apiKey: 'test-api-key',
+    models: ['gpt-4', 'gpt-4o-mini', 'gpt-3.5-turbo'],
+    maxCostPerRequest: 0.0000001, // Extremely low budget
+    cacheTTL: 5000,
+  };
+  
+  const tokaVeryLowBudget = new Toka(veryLowBudgetConfig);
+  const longPrompt = 'This is a very long prompt that should exceed the budget for all models. '.repeat(100);
+  
+  console.log('Making request with very low budget (should fail for all models)');
+  try {
+    const budgetExceededResponse = await tokaVeryLowBudget.request('gpt-4', longPrompt);
+    console.log(`✅ Request completed: ${budgetExceededResponse.text.substring(0, 50)}...`);
+  } catch (error) {
+    console.log(`❌ Expected error: ${error.message}`);
+  }
+  
+  console.log('\n--- Fallback with Long Prompt Demo ---');
+  const moderateBudgetConfig = {
+    apiKey: 'test-api-key',
+    models: ['gpt-4', 'gpt-4o-mini', 'gpt-3.5-turbo'],
+    maxCostPerRequest: 0.001, // Moderate budget
+    cacheTTL: 5000,
+  };
+  
+  const tokaModerateBudget = new Toka(moderateBudgetConfig);
+  const longPrompt2 = 'This is a very long prompt that should exceed the budget for expensive models. '.repeat(50);
+  
+  console.log('Making request with long prompt (should fallback to cheaper model)');
+  try {
+    const longPromptResponse = await tokaModerateBudget.request('gpt-4', longPrompt2);
+    console.log(`✅ Request completed successfully!`);
+    console.log(`   Requested model: gpt-4`);
+    console.log(`   Model actually used: ${longPromptResponse.modelUsed}`);
+    console.log(`   Cost: $${longPromptResponse.cost.toFixed(6)}`);
+    console.log(`   Fallback occurred: ${longPromptResponse.modelUsed !== 'gpt-4'}`);
+  } catch (error) {
+    console.log(`❌ Error: ${error.message}`);
+  }
+  
+  console.log('\n✨ Additional Features Demonstrated:');
+  console.log('• Automatic model fallback when budget exceeded');
+  console.log('• Model preference ordering (most expensive first)');
+  console.log('• Cost-based model selection');
+  console.log('• Graceful handling when no model fits budget');
+  console.log('• ModelUsed field in SDKResponse shows actual model used');
 }
 
 // Run the example

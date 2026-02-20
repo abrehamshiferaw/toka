@@ -1,8 +1,9 @@
 {
   "name": "toka",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "AI Cost Optimizer SDK for developers to track token usage, estimate costs, and reduce AI API spend.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "directories": {
     "example": "examples",
     "test": "tests"
@@ -10,21 +11,46 @@
   "scripts": {
     "build": "tsc",
     "start": "ts-node src/index.ts",
-    "test": "npx jest",
+    "test": "jest",
     "lint": "eslint src/**/*.ts",
-    "format": "npx prettier --write src/**/*.ts"
+    "format": "prettier --write src/**/*.ts",
+    "prepare": "npm run build"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "AI",
+    "SDK",
+    "Open Source",
+    "Cost Optimization",
+    "OpenAI",
+    "Gemini",
+    "Developer Tools"
+  ],
+  "author": "Abreham Wondimu Shiferaw",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AbrehamWondimu/toka.git"
+  },
+  "bugs": {
+    "url": "https://github.com/AbrehamWondimu/toka/issues"
+  },
+  "homepage": "https://github.com/AbrehamWondimu/toka#readme",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "assets"
+  ],
+  "dependencies": {
+    "axios": "^1.13.5",
+    "dotenv": "^17.3.1"
+  },
   "devDependencies": {
     "@types/axios": "^0.14.4",
     "@types/jest": "^30.0.0",
     "@types/node": "^25.3.0",
     "@typescript-eslint/eslint-plugin": "^8.56.0",
     "@typescript-eslint/parser": "^8.56.0",
-    "axios": "^1.13.5",
-    "dotenv": "^17.3.1",
     "eslint": "^10.0.0",
     "jest": "^30.2.0",
     "prettier": "^3.8.1",
