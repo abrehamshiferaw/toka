@@ -1,6 +1,6 @@
 {
   "name": "toka-sdk",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "AI Cost Optimizer SDK for developers to track token usage, estimate costs, and reduce AI API spend.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
