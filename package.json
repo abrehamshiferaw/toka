@@ -29,12 +29,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/AbrehamWondimu/toka.git"
+    "url": "git+https://github.com/abrehamshiferaw/toka.git"
   },
   "bugs": {
-    "url": "https://github.com/AbrehamWondimu/toka/issues"
+    "url": "https://github.com/abrehamshiferaw/toka/issues"
   },
-  "homepage": "https://github.com/AbrehamWondimu/toka#readme",
+  "homepage": "https://github.com/abrehamshiferaw/toka#readme",
   "files": [
     "dist",
     "README.md",
