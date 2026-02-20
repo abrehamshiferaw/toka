@@ -1,0 +1,25 @@
+flowchart TD
+    A[Toka SDK Core] --> B[Cost Estimator]
+    B --> C[Cache Layer]
+    C --> D[AI API Client]
+    D --> E[Model Fallback]
+    E --> F[Logger & Analytics]
+
+    %% Optional styling
+    classDef core fill:#4f46e5,stroke:#333,stroke-width:2px,color:white;
+    classDef process fill:#10b981,stroke:#333,stroke-width:2px,color:white;
+    classDef api fill:#f59e0b,stroke:#333,stroke-width:2px,color:white;
+    classDef analytics fill:#ec4899,stroke:#333,stroke-width:2px,color:white;
+
+    class A core;
+    class B process;
+    class C process;
+    class D api;
+    class E process;
+    class F analytics;
+
+    %% Descriptions
+    B:::process --> |"Calculates tokens & estimated cost"| D
+    C:::process --> |"Check cache before API call"| D
+    E:::process --> |"Switch model if cost too high"| D
+    F:::analytics --> |"Log tokens, cost, cache hits, fallback"| A
