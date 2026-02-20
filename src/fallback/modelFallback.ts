@@ -1,5 +1,4 @@
-/**
- * Model Fallback Module
+/** * Model Fallback Module
  * Handles automatic model fallback when cost exceeds budget
  */
 
