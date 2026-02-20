@@ -1,7 +1,28 @@
+<p align="center">
+  <img src="assets/logo.png" alt="Toka Logo" width="180" />
+</p>
 
-# Toka SDK
 
-![Toka Logo](assets/logo.png)
+<p align="center">
+  <a href="https://www.npmjs.com/package/toka-sdk">
+    <img src="https://img.shields.io/npm/v/toka-sdk?style=for-the-badge&color=2ea44f&label=version" alt="npm version"/>
+  </a>
+  &nbsp;&nbsp;
+  <a href="https://www.npmjs.com/package/toka-sdk">
+    <img src="https://img.shields.io/badge/downloads-growing-brightgreen?style=for-the-badge&color=blue" alt="downloads"/>
+  </a>
+  &nbsp;&nbsp;
+  <a href="https://github.com/abrehamshiferaw/toka">
+    <img src="https://img.shields.io/github/forks/abrehamshiferaw/toka?style=for-the-badge" />
+  </a>
+	 &nbsp;&nbsp;
+  <a href="https://www.npmjs.com/package/toka-sdk">
+    <img src="https://img.shields.io/npm/l/toka-sdk?style=for-the-badge&color=orange" />
+  </a>
+</p>
+
+
+
 
 **Toka** is an **AI Cost Optimizer SDK** for developers to track token usage, estimate costs in real-time, reduce API spend, and optimize AI model usage. Save money, reduce redundant calls, and gain full visibility into your AI workloads.
 
