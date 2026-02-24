@@ -13,10 +13,10 @@
   <a href="https://www.npmjs.com/package/toka-sdk">
     <img src="https://img.shields.io/npm/v/toka-sdk?style=for-the-badge&color=2ea44f&label=version" alt="npm version"/>
   </a>
-  <!-- &nbsp;&nbsp;
+  &nbsp;&nbsp;
   <a href="https://www.npmjs.com/package/toka-sdk">
     <img src="https://img.shields.io/npm/dm/toka-sdk?style=for-the-badge&color=blue&label=downloads" alt="downloads/month"/>
-  </a> -->
+  </a>
   &nbsp;&nbsp;
   <a href="https://github.com/abrehamshiferaw/toka">
     <img src="https://img.shields.io/github/forks/abrehamshiferaw/toka?style=for-the-badge" />
