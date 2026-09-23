@@ -1,224 +1,59 @@
-<p align="center">
-  <img src="assets/logo.png" alt="Toka Logo" width="180" />
-</p>
-
+<p align="center"><img src="assets/logo.png" alt="Toka AI cost optimization SDK logo" width="180" /></p>
 <h1 align="center">Toka SDK</h1>
+<p align="center"><strong>AI cost optimization SDK for developers</strong><br />Track LLM token usage · Estimate API costs · Control budgets · Optimize model usage</p>
+<p align="center"><a href="https://github.com/sponsors/abrehamshiferaw">💖 Sponsor Toka</a></p>
 
-<p align="center">
-  <strong>AI Cost Optimizer SDK for Developers</strong><br/>
-  Track token usage • Estimate costs in real-time • Reduce AI API spend • Optimize model usage
-</p>
+## What is Toka?
 
-<p align="center">
-  <a href="https://www.npmjs.com/package/toka-sdk">
-    <img src="https://img.shields.io/npm/v/toka-sdk?style=for-the-badge&color=2ea44f&label=version" alt="npm version"/>
-  </a>
-  &nbsp;&nbsp;
-  <a href="https://www.npmjs.com/package/toka-sdk">
-    <img src="https://img.shields.io/npm/dm/toka-sdk?style=for-the-badge&color=blue&label=downloads" alt="downloads/month"/>
-  </a>
-  &nbsp;&nbsp;
-  <a href="https://github.com/abrehamshiferaw/toka">
-    <img src="https://img.shields.io/github/forks/abrehamshiferaw/toka?style=for-the-badge" />
-  </a>
-  &nbsp;&nbsp;
-  <a href="https://www.npmjs.com/package/toka-sdk">
-    <img src="https://img.shields.io/npm/l/toka-sdk?style=for-the-badge&color=orange" />
-  </a>
-</p>
+Toka is a lightweight, developer-first **AI cost optimization SDK** for TypeScript and Node.js applications. It helps teams understand and reduce the cost of OpenAI and other LLM API workloads without sacrificing product quality.
 
----
+### Why support Toka?
 
-## 🚀 What is Toka?
+Sponsorship helps fund provider integrations, reliable cost data, tests, documentation, caching improvements, budget controls, and production-ready observability for AI applications.
 
-**Toka SDK** is a lightweight, developer-first **AI Cost Optimization SDK** built to help you:
+## Features
 
-- Track token usage automatically  
-- Estimate API costs in real-time  
-- Prevent overspending with cost limits  
-- Reduce redundant API calls using caching  
-- Automatically fallback to cheaper AI models  
+- Track token usage for every AI request
+- Estimate LLM API costs in real time
+- Enforce per-request and application budgets
+- Reduce redundant calls with in-memory or Redis caching
+- Configure cheaper-model fallback strategies
+- Support multi-model AI workflows
+- Inspect costs, tokens, cache hits, fallbacks, and model selection
 
-It works seamlessly with modern AI models like OpenAI and other LLM providers.
-
-If you're building AI-powered apps, Toka helps you control cost without sacrificing performance.
-
----
-
-# 📦 Installation
+## Installation
 
 ```bash
 npm install toka-sdk
 ```
 
----
-
-# ⚡ Quick Start
-
-### 1️⃣ Import the SDK
+## Quick start
 
 ```ts
 import { TokaClient } from 'toka-sdk';
-```
 
----
-
-### 2️⃣ Initialize the Client
-
-```ts
 const client = new TokaClient({
   apiKey: process.env.TOKA_API_KEY,
   models: ['gpt-4', 'gpt-4o-mini', 'gpt-3.5'],
-  maxCostPerRequest: 0.05,   // Maximum allowed cost per request (USD)
-  cache: true                // Enable built-in caching
+  maxCostPerRequest: 0.05,
+  cache: true
 });
-```
 
----
-
-### 3️⃣ Make an API Call with Cost Tracking
-
-```ts
 const response = await client.chat({
-  messages: [
-    { role: 'user', content: 'Hello world' }
-  ]
+  messages: [{ role: 'user', content: 'Hello world' }]
 });
 
-console.log(`Text: ${response.text}`);
-console.log(`Cost: $${response.cost}`);
-console.log(`Tokens used: ${response.tokens}`);
-console.log(`Model used: ${response.modelUsed}`);
-console.log(`Cache hit: ${response.cacheHit}`);
+console.log(response.text, response.cost, response.tokens, response.modelUsed);
 ```
 
----
+## Ideal for
 
-# ✨ Core Features
+AI SaaS products, chatbots, LLM-powered web apps, prompt workflows, high-volume AI APIs, and startups monitoring AI infrastructure spend.
 
-## 🔍 Token Usage Tracking
-Automatically tracks token usage for every request.
+## Contributing and sponsorship
 
-## 💰 Real-Time Cost Estimation
-Know exactly how much each API call costs before and after execution.
+Bug reports, provider integrations, documentation, tests, and performance improvements are welcome. If Toka helps your product, please [star the repository](https://github.com/abrehamshiferaw/toka), contribute, or [sponsor Toka](https://github.com/sponsors/abrehamshiferaw).
 
-## 🧠 Intelligent Cost Optimization
-If a request exceeds your defined budget, Toka automatically falls back to a cheaper model.
+## License
 
-## ⚡ Built-In Caching
-Reduce redundant API calls with:
-- In-memory caching
-- Optional Redis integration
-
-## 🔄 Multi-Model Support
-Define multiple models and let Toka dynamically choose the optimal one.
-
-## 📊 Logging & Analytics
-Gain visibility into:
-- Tokens used
-- Cost per request
-- Cache hits
-- Fallback events
-- Model selection
-
----
-
-# 🧩 Optional Enhancements
-
-Toka is modular and extensible.
-
-### 🗄 Redis Caching
-Use Redis for scalable, production-grade caching.
-
-### 📈 Dashboard Middleware
-Mountable Express middleware to monitor AI usage and costs.
-
-### 🖥 CLI Tool
-Interact with AI APIs directly from your terminal.
-
-### 🎣 Event Hooks
-Listen to lifecycle events:
-- `onRequest`
-- `onFallback`
-- `onCacheHit`
-- `onComplete`
-
----
-
-# 🧪 Testing
-
-Run unit tests:
-
-```bash
-npm test
-```
-
----
-
-# 🛠 Development
-
-Build the project:
-
-```bash
-npm run build
-```
-
-Lint:
-
-```bash
-npm run lint
-```
-
-Format:
-
-```bash
-npm run format
-```
-
----
-
-# 🌍 Use Cases
-
-Toka SDK is ideal for:
-
-- AI SaaS platforms
-- Chatbot applications
-- AI-powered web apps
-- Prompt engineering workflows
-- High-volume AI API environments
-- Startups monitoring burn rate
-
----
-
-# 🤝 Contributing
-
-We welcome contributions from the community!
-
-Please read **CONTRIBUTING.md** before submitting a pull request.
-
-Ways to contribute:
-- Bug fixes
-- Feature improvements
-- Documentation
-- Test coverage
-- New integrations
-
----
-
-# 📄 License
-
-MIT License © 2026  
-Abreham Wondimu Shiferaw
-
----
-
-# ⭐ Support the Project
-
-If Toka SDK helps your project:
-
-- Star the repository
-- Share it with other developers
-- Open issues or feature suggestions
-- Contribute improvements
-
-Open source grows through community support ❤️
+MIT © 2026 Abreham Wondimu Shiferaw
