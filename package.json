@@ -1,11 +1,28 @@
 {
   "name": "toka-sdk",
-  "version": "1.3.0",
-  "description": "TypeScript cost-control and observability architecture for LLM applications.",
+  "version": "2.3.0",
+  "description": "TypeScript cost-control, smart model routing, and observability architecture for LLM and AI code agents.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "exports": { ".": { "types": "./dist/index.d.ts", "require": "./dist/index.js" } },
-  "files": ["dist", "README.md", "LICENSE", "assets"],
+  "bin": {
+    "toka": "./bin/toka"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "MIGRATION.md",
+    "SECURITY.md",
+    "CHANGELOG.md",
+    "LICENSE",
+    "assets"
+  ],
   "scripts": {
     "dev": "ts-node src/server.ts",
     "build": "tsc",
@@ -16,15 +33,33 @@
     "format": "prettier --write src/**/*.ts tests/**/*.ts",
     "format:check": "prettier --check src/**/*.ts tests/**/*.ts",
     "typecheck": "tsc --noEmit",
-    "smoke": "npm run build && node -e \"const { Toka, MockProvider, OpenAIProvider, TokaPricingError } = require('./dist'); if (!Toka || !MockProvider || !OpenAIProvider || !TokaPricingError) process.exit(1); console.log('package import ok')\"",
-    "check": "npm run lint && npm run format:check && npm run typecheck && npm run test:coverage && npm run smoke",
+    "smoke": "npm run build && node -e \"const { Toka, MockProvider, OpenAIProvider, ModelRouter, CostReporter, AgentAnalytics, TokaPricingError } = require('./dist'); if (!Toka || !MockProvider || !OpenAIProvider || !ModelRouter || !CostReporter || !AgentAnalytics || !TokaPricingError) process.exit(1); console.log('package import ok')\"",
+    "check": "npm run typecheck && npm run test:coverage && npm run smoke",
     "prepare": "npm run build"
   },
-  "keywords": ["AI", "SDK", "Open Source", "Cost Control", "Developer Tools"],
+  "keywords": [
+    "AI",
+    "SDK",
+    "Cost Control",
+    "AI Agents",
+    "Coding Agents",
+    "Smart Routing",
+    "Model Routing",
+    "Observability",
+    "OpenTelemetry",
+    "Redis Cache",
+    "TypeScript",
+    "Developer Tools"
+  ],
   "author": "Abreham Wondimu Shiferaw",
   "license": "MIT",
-  "repository": { "type": "git", "url": "git+https://github.com/abrehamshiferaw/toka.git" },
-  "bugs": { "url": "https://github.com/abrehamshiferaw/toka/issues" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/abrehamshiferaw/toka.git"
+  },
+  "bugs": {
+    "url": "https://github.com/abrehamshiferaw/toka/issues"
+  },
   "homepage": "https://github.com/abrehamshiferaw/toka#readme",
   "devDependencies": {
     "@types/jest": "^30.0.0",

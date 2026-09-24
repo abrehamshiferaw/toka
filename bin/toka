@@ -1,0 +1,10 @@
+#!/usr/bin/env node
+const path = require('path');
+const cliPath = path.join(__dirname, '..', 'dist', 'cli', 'index.js');
+try {
+  require(cliPath);
+} catch (e) {
+  // If not built yet, fall back to ts-node if available
+  require('ts-node/register');
+  require(path.join(__dirname, '..', 'src', 'cli', 'index.ts'));
+}

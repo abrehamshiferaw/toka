@@ -15,13 +15,32 @@ function canonicalize(value: unknown): unknown {
   return value;
 }
 
+export interface CacheKeyOptions {
+  namespace?: string;
+  includeCommitSha?: boolean;
+}
+
 export function createCacheKey(
   request: SDKRequest,
-  namespace = 'toka:v1'
+  namespace = 'toka:v1',
+  options: CacheKeyOptions = {}
 ): string {
+  // Normalize canonical request
   const canonical = JSON.stringify(canonicalize(request));
   const digest = createHash('sha256').update(canonical).digest('hex');
-  return `${namespace}:${digest}`;
+
+  const repo = request.agentContext?.repository;
+  const commit = options.includeCommitSha !== false ? request.agentContext?.commitSha : undefined;
+
+  let prefix = namespace;
+  if (repo) {
+    prefix = `${prefix}:${repo.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+  }
+  if (commit) {
+    prefix = `${prefix}:${commit.substring(0, 12)}`;
+  }
+
+  return `${prefix}:${digest}`;
 }
 
 export { canonicalize };

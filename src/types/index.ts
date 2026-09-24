@@ -11,6 +11,23 @@ import type {
   BudgetWarning,
   ScopeLimit,
 } from '../budgets/types';
+import type { AgentContext, AgentStage } from '../agent/types';
+import type {
+  ModelCapability,
+  ModelMetadata,
+  QualityTier,
+  RoutingConfig,
+  RoutingDecision,
+  RoutingPolicy,
+  RoutingRequirements,
+} from '../routing/types';
+import type { CacheAdapter, CacheMetrics, CacheOptions } from '../cache/types';
+import type {
+  CostReport,
+  CostReportSummary,
+  ReportFilter,
+  UsageEvent,
+} from '../observability/types';
 
 export type {
   BudgetAction,
@@ -24,24 +41,45 @@ export type {
   BudgetViolation,
   BudgetWarning,
   ScopeLimit,
+  AgentContext,
+  AgentStage,
+  ModelCapability,
+  ModelMetadata,
+  QualityTier,
+  RoutingConfig,
+  RoutingDecision,
+  RoutingPolicy,
+  RoutingRequirements,
+  CacheAdapter,
+  CacheMetrics,
+  CacheOptions,
+  CostReport,
+  CostReportSummary,
+  ReportFilter,
+  UsageEvent,
 };
 
 export type MessageRole = 'system' | 'user' | 'assistant' | 'tool';
+
 export interface Message {
   role: MessageRole;
   content: string;
   name?: string;
   toolCallId?: string;
 }
+
 export interface ToolDefinition {
   name: string;
   description?: string;
   parameters?: Record<string, unknown>;
 }
+
 export interface RequestMetadata {
   requestId?: string;
-  [key: string]: string | number | boolean | undefined;
+  sensitive?: boolean;
+  [key: string]: unknown;
 }
+
 export interface SDKRequest {
   model: string;
   messages: Message[];
@@ -50,14 +88,21 @@ export interface SDKRequest {
   tools?: ToolDefinition[];
   metadata?: RequestMetadata;
   budgetContext?: BudgetContext;
+  agentContext?: AgentContext;
+  routing?: RoutingPolicy | RoutingConfig;
+  cache?: boolean;
+  sensitive?: boolean;
 }
+
 export interface ProviderRequest extends SDKRequest {}
+
 export interface ProviderUsage {
   inputTokens: number;
   outputTokens: number;
   totalTokens: number;
   isEstimated: boolean;
 }
+
 export interface ProviderResponse {
   text: string;
   provider: string;
@@ -66,6 +111,7 @@ export interface ProviderResponse {
   raw?: unknown;
   metadata?: Record<string, unknown>;
 }
+
 export interface SDKResponse {
   text: string;
   provider: string;
@@ -81,19 +127,25 @@ export interface SDKResponse {
   latencyMs: number;
   budgetDecision?: BudgetDecision;
   budgetWarning?: BudgetWarning;
+  routingDecision?: RoutingDecision;
+  agentContext?: AgentContext;
+  usageEvent?: UsageEvent;
 }
+
 export interface Cache {
   get<T>(key: string): Promise<T | null>;
   set<T>(key: string, value: T, ttlMs?: number): Promise<void>;
   has(key: string): Promise<boolean>;
-  delete(key: string): Promise<void>;
+  delete(key: string): Promise<unknown>;
   clear(): Promise<void>;
 }
+
 export interface RetryConfig {
   maxRetries?: number;
   exponentialBackoff?: boolean;
   baseDelayMs?: number;
 }
+
 export interface SDKConfig {
   apiKey?: string;
   models: string[];
@@ -112,31 +164,44 @@ export interface SDKConfig {
       version?: string;
     }
   >;
+  routing?: RoutingConfig | RoutingPolicy;
+  modelsMetadata?: ModelMetadata[];
+  caching?: CacheOptions & { enabled?: boolean };
 }
+
 export interface AIProvider {
   readonly name: string;
   complete(request: ProviderRequest): Promise<ProviderResponse>;
 }
+
 export interface LegacyRequestOptions {
   temperature?: number;
   maxTokens?: number;
   tools?: ToolDefinition[];
   metadata?: RequestMetadata;
+  agentContext?: AgentContext;
+  routing?: RoutingPolicy | RoutingConfig;
   [key: string]: unknown;
 }
+
 export interface LegacySDKResponse extends SDKResponse {
   tokens: number;
 }
+
 export const DEFAULT_CACHE_TTL_MS = 5 * 60 * 1000;
 export const DEFAULT_TIMEOUT_MS = 30_000;
+
 export type CacheEntry<T> = { value: T; expiresAt: number | null };
+
 export type Config = SDKConfig;
 export type Request = SDKRequest;
 export type Response = SDKResponse;
 export type ChatMessage = Message;
+
 export function getMessageText(messages: Message[]): string {
   return messages.map((message) => message.content).join('\n');
 }
+
 export function cloneConfig(config: SDKConfig): SDKConfig {
   return {
     ...config,
@@ -144,8 +209,12 @@ export function cloneConfig(config: SDKConfig): SDKConfig {
     budgets: config.budgets ? { ...config.budgets } : undefined,
     retry: config.retry ? { ...config.retry } : undefined,
     pricing: config.pricing ? { ...config.pricing } : undefined,
+    routing: typeof config.routing === 'object' ? { ...config.routing } : config.routing,
+    modelsMetadata: config.modelsMetadata ? [...config.modelsMetadata] : undefined,
+    caching: config.caching ? { ...config.caching } : undefined,
   };
 }
+
 export function normalizeLegacyOptions(
   options?: LegacyRequestOptions
 ): Partial<SDKRequest> {
@@ -155,6 +224,8 @@ export function normalizeLegacyOptions(
         maxTokens: options.maxTokens,
         tools: options.tools,
         metadata: options.metadata,
+        agentContext: options.agentContext,
+        routing: options.routing,
       }
     : {};
 }

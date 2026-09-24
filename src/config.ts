@@ -1,167 +1,138 @@
 import * as fs from 'fs';
+import { BudgetAction, BudgetPolicy, ScopeLimit } from './budgets/types';
 import { TokaConfigurationError } from './errors';
+import { RoutingPolicy, RoutingConfig } from './routing/types';
 import {
   DEFAULT_CACHE_TTL_MS,
   DEFAULT_TIMEOUT_MS,
   SDKConfig,
-  BudgetPolicy,
-  BudgetAction,
-  ScopeLimit,
 } from './types';
 
-function parseNumber(value: string, field: string): number {
+function parseNumber(value: string | undefined, name: string): number {
   const parsed = Number(value);
   if (!Number.isFinite(parsed))
-    throw new TokaConfigurationError(`${field} must be a finite number.`);
+    throw new TokaConfigurationError(
+      `Environment variable ${name} must be a valid number, got '${value}'.`
+    );
   return parsed;
 }
 
-const VALID_ACTIONS: BudgetAction[] = ['allow', 'warn', 'fallback', 'block'];
+export function validateScopeLimit(limit: unknown, scopeName: string): ScopeLimit {
+  if (typeof limit === 'number') {
+    if (!Number.isFinite(limit) || limit < 0) {
+      throw new TokaConfigurationError(
+        `Budget limit for ${scopeName} must be a non-negative finite number.`
+      );
+    }
+    return limit;
+  }
 
-function validateScopeLimit(value: unknown, field: string): ScopeLimit {
-  if (typeof value === 'number') {
-    if (!Number.isFinite(value) || value < 0) {
+  if (limit && typeof limit === 'object') {
+    const config = limit as Record<string, unknown>;
+    if (typeof config.limit !== 'number' || !Number.isFinite(config.limit) || config.limit < 0) {
       throw new TokaConfigurationError(
-        `${field} must be a finite non-negative number.`
+        `Budget limit for ${scopeName} must specify a non-negative numeric 'limit'.`
       );
     }
-    return value;
-  }
-  if (value && typeof value === 'object' && !Array.isArray(value)) {
-    const obj = value as {
-      limit?: unknown;
-      action?: unknown;
-      warnThreshold?: unknown;
-    };
-    if (
-      typeof obj.limit !== 'number' ||
-      !Number.isFinite(obj.limit) ||
-      obj.limit < 0
-    ) {
+
+    const action = config.action as string | undefined;
+    if (action !== undefined && !['allow', 'warn', 'fallback', 'block'].includes(action)) {
       throw new TokaConfigurationError(
-        `${field}.limit must be a finite non-negative number.`
+        `Invalid action '${action}' for ${scopeName}. Allowed actions: allow, warn, fallback, block.`
       );
     }
-    if (
-      obj.action !== undefined &&
-      (!VALID_ACTIONS.includes(obj.action as BudgetAction) ||
-        typeof obj.action !== 'string')
-    ) {
-      throw new TokaConfigurationError(
-        `${field}.action must be one of: ${VALID_ACTIONS.join(', ')}.`
-      );
+
+    if (config.warnThreshold !== undefined) {
+      if (
+        typeof config.warnThreshold !== 'number' ||
+        !Number.isFinite(config.warnThreshold) ||
+        config.warnThreshold < 0 ||
+        config.warnThreshold > 1
+      ) {
+        throw new TokaConfigurationError(
+          `warnThreshold for ${scopeName} must be a number between 0 and 1.`
+        );
+      }
     }
-    if (
-      obj.warnThreshold !== undefined &&
-      (typeof obj.warnThreshold !== 'number' ||
-        !Number.isFinite(obj.warnThreshold) ||
-        obj.warnThreshold < 0)
-    ) {
-      throw new TokaConfigurationError(
-        `${field}.warnThreshold must be a finite non-negative number.`
-      );
-    }
+
     return {
-      limit: obj.limit,
-      action: obj.action as BudgetAction | undefined,
-      warnThreshold: obj.warnThreshold,
+      limit: config.limit,
+      action: action as BudgetAction | undefined,
+      warnThreshold: config.warnThreshold as number | undefined,
     };
   }
+
   throw new TokaConfigurationError(
-    `${field} must be a number or limit configuration object.`
+    `Invalid budget limit configuration for ${scopeName}. Expected number or limit config object.`
   );
 }
 
 export function validateBudgetPolicy(policy: unknown): BudgetPolicy {
-  if (!policy || typeof policy !== 'object' || Array.isArray(policy)) {
-    throw new TokaConfigurationError('budgets must be an object.');
+  if (!policy || typeof policy !== 'object') {
+    throw new TokaConfigurationError('Budget policy must be a non-null object.');
   }
-  const input = policy as Partial<BudgetPolicy>;
+
+  const p = policy as Record<string, unknown>;
   const validated: BudgetPolicy = {};
 
-  if (input.perRequest !== undefined) {
-    validated.perRequest = validateScopeLimit(
-      input.perRequest,
-      'budgets.perRequest'
-    );
+  if (p.perRequest !== undefined) {
+    validated.perRequest = validateScopeLimit(p.perRequest, 'perRequest');
   }
-  if (input.perTask !== undefined) {
-    validated.perTask = validateScopeLimit(input.perTask, 'budgets.perTask');
+  if (p.perTask !== undefined) {
+    validated.perTask = validateScopeLimit(p.perTask, 'perTask');
   }
-  if (input.perSession !== undefined) {
-    validated.perSession = validateScopeLimit(
-      input.perSession,
-      'budgets.perSession'
-    );
+  if (p.perSession !== undefined) {
+    validated.perSession = validateScopeLimit(p.perSession, 'perSession');
   }
-  if (input.perDay !== undefined) {
-    validated.perDay = validateScopeLimit(input.perDay, 'budgets.perDay');
+  if (p.perDay !== undefined) {
+    validated.perDay = validateScopeLimit(p.perDay, 'perDay');
   }
-  if (input.perMonth !== undefined) {
-    validated.perMonth = validateScopeLimit(
-      input.perMonth,
-      'budgets.perMonth'
-    );
+  if (p.perMonth !== undefined) {
+    validated.perMonth = validateScopeLimit(p.perMonth, 'perMonth');
   }
 
-  if (input.action !== undefined) {
-    if (
-      typeof input.action !== 'string' ||
-      !VALID_ACTIONS.includes(input.action as BudgetAction)
-    ) {
+  const defaultAction = (p.defaultAction ?? p.action) as string | undefined;
+  if (defaultAction !== undefined) {
+    if (!['allow', 'warn', 'fallback', 'block'].includes(defaultAction)) {
       throw new TokaConfigurationError(
-        `budgets.action must be one of: ${VALID_ACTIONS.join(', ')}.`
+        `Invalid defaultAction '${defaultAction}'. Allowed actions: allow, warn, fallback, block.`
       );
     }
-    validated.action = input.action as BudgetAction;
-  }
-  if (input.defaultAction !== undefined) {
-    if (
-      typeof input.defaultAction !== 'string' ||
-      !VALID_ACTIONS.includes(input.defaultAction as BudgetAction)
-    ) {
-      throw new TokaConfigurationError(
-        `budgets.defaultAction must be one of: ${VALID_ACTIONS.join(', ')}.`
-      );
-    }
-    validated.defaultAction = input.defaultAction as BudgetAction;
+    validated.defaultAction = defaultAction as BudgetAction;
+    validated.action = defaultAction as BudgetAction;
   }
 
-  if (input.approvalRequiredAbove !== undefined) {
+  if (p.approvalRequiredAbove !== undefined) {
     if (
-      typeof input.approvalRequiredAbove !== 'number' ||
-      !Number.isFinite(input.approvalRequiredAbove) ||
-      input.approvalRequiredAbove < 0
+      typeof p.approvalRequiredAbove !== 'number' ||
+      !Number.isFinite(p.approvalRequiredAbove) ||
+      p.approvalRequiredAbove < 0
     ) {
       throw new TokaConfigurationError(
-        'budgets.approvalRequiredAbove must be a finite non-negative number.'
+        'approvalRequiredAbove must be a non-negative finite number.'
       );
     }
-    validated.approvalRequiredAbove = input.approvalRequiredAbove;
+    validated.approvalRequiredAbove = p.approvalRequiredAbove;
   }
 
-  if (input.timezone !== undefined) {
-    if (typeof input.timezone !== 'string' || !input.timezone.trim()) {
-      throw new TokaConfigurationError(
-        'budgets.timezone must be a non-empty string.'
-      );
+  if (p.timezone !== undefined) {
+    if (typeof p.timezone !== 'string' || p.timezone.trim() === '') {
+      throw new TokaConfigurationError('timezone must be a non-empty string.');
     }
-    try {
-      new Intl.DateTimeFormat(undefined, { timeZone: input.timezone });
-    } catch {
-      throw new TokaConfigurationError(
-        `Invalid IANA timezone in budget configuration: '${input.timezone}'.`
-      );
-    }
-    validated.timezone = input.timezone;
+    validated.timezone = p.timezone;
   }
 
   return validated;
 }
 
+const ALLOWED_ROUTING_POLICIES: RoutingPolicy[] = [
+  'cheapest',
+  'balanced',
+  'quality-first',
+  'strict-model',
+];
+
 export function validateConfig(input: Partial<SDKConfig>): SDKConfig {
-  if (input.apiKey !== undefined && typeof input.apiKey !== 'string')
-    throw new TokaConfigurationError('apiKey must be a string when provided.');
   if (!Array.isArray(input.models) || input.models.length === 0)
     throw new TokaConfigurationError('models must be a non-empty array.');
   if (
@@ -226,11 +197,13 @@ export function validateConfig(input: Partial<SDKConfig>): SDKConfig {
     throw new TokaConfigurationError(
       'cacheTTL must be a finite, non-negative number of milliseconds.'
     );
+
   const timeoutMs = input.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   if (!Number.isFinite(timeoutMs) || timeoutMs <= 0)
     throw new TokaConfigurationError(
       'timeoutMs must be a finite number greater than 0.'
     );
+
   const retry = {
     maxRetries: input.retry?.maxRetries ?? 2,
     exponentialBackoff: input.retry?.exponentialBackoff ?? true,
@@ -248,6 +221,7 @@ export function validateConfig(input: Partial<SDKConfig>): SDKConfig {
     throw new TokaConfigurationError(
       'retry.exponentialBackoff must be boolean.'
     );
+
   if (input.pricing)
     for (const [key, pricing] of Object.entries(input.pricing)) {
       if (
@@ -260,6 +234,21 @@ export function validateConfig(input: Partial<SDKConfig>): SDKConfig {
         throw new TokaConfigurationError(`Invalid pricing override '${key}'.`);
     }
 
+  const routing: RoutingConfig | RoutingPolicy | undefined = input.routing;
+  if (typeof routing === 'string') {
+    if (!ALLOWED_ROUTING_POLICIES.includes(routing)) {
+      throw new TokaConfigurationError(
+        `Invalid routing policy '${routing}'. Allowed policies: ${ALLOWED_ROUTING_POLICIES.join(', ')}`
+      );
+    }
+  } else if (routing && typeof routing === 'object') {
+    if (routing.policy && !ALLOWED_ROUTING_POLICIES.includes(routing.policy)) {
+      throw new TokaConfigurationError(
+        `Invalid routing policy '${routing.policy}'. Allowed policies: ${ALLOWED_ROUTING_POLICIES.join(', ')}`
+      );
+    }
+  }
+
   return {
     apiKey: input.apiKey,
     models: [...input.models],
@@ -269,6 +258,9 @@ export function validateConfig(input: Partial<SDKConfig>): SDKConfig {
     timeoutMs,
     retry,
     pricing: input.pricing ? { ...input.pricing } : undefined,
+    routing,
+    modelsMetadata: input.modelsMetadata,
+    caching: input.caching,
   };
 }
 
@@ -286,6 +278,7 @@ export function loadConfig(configPath?: string): SDKConfig {
       );
     }
   }
+
   const envConfig: Partial<SDKConfig> = {};
   if (process.env.TOKA_API_KEY !== undefined)
     envConfig.apiKey = process.env.TOKA_API_KEY;
@@ -313,6 +306,10 @@ export function loadConfig(configPath?: string): SDKConfig {
       process.env.TOKA_TIMEOUT_MS,
       'TOKA_TIMEOUT_MS'
     );
+
+  if (process.env.TOKA_ROUTING_POLICY !== undefined) {
+    envConfig.routing = process.env.TOKA_ROUTING_POLICY as RoutingPolicy;
+  }
 
   // Budget environment variables
   const envBudgets: Partial<BudgetPolicy> = {};

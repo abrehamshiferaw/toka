@@ -1,16 +1,35 @@
 export { Toka } from './core/toka';
+export type { TokaOptions } from './core/toka';
+
 export { MockProvider, createMockProvider } from './providers/mock';
 export { OpenAIProvider } from './providers/openai';
 export type { OpenAIProviderOptions } from './providers/openai';
+
 export { MemoryCache } from './cache/memoryCache';
 export { RedisCache, createRedisCache } from './cache/redisCache';
+export type { RedisCacheOptions } from './cache/redisCache';
+export type {
+  CacheAdapter,
+  CacheMetrics,
+  CacheOptions,
+  RedisClientLike,
+} from './cache/types';
+
 export {
   loadConfig,
   validateConfig,
   validateBudgetPolicy,
+  validateScopeLimit,
   createSampleConfig,
 } from './config';
-export { createCacheKey } from './security/cache-key';
+
+export { createCacheKey, canonicalize } from './security/cache-key';
+export type { CacheKeyOptions } from './security/cache-key';
+export {
+  isSensitiveRequest,
+  containsSensitiveData,
+} from './security/sensitive';
+
 export {
   calculateCost,
   getPricing,
@@ -21,6 +40,14 @@ export type {
   PricingOverride,
   CostBreakdown,
 } from './cost/pricing';
+
+export { estimateCost } from './cost/estimator';
+export {
+  getNextModel,
+  getModelWithinBudget,
+  ModelFallbackHandler,
+} from './fallback/modelFallback';
+
 export {
   TokaError,
   TokaConfigurationError,
@@ -38,6 +65,7 @@ export {
   TokaPricingError,
 } from './errors';
 export type { TokaErrorOptions, TokaBudgetErrorOptions } from './errors';
+
 export { BudgetManager } from './budgets/manager';
 export {
   InMemoryBudgetStore,
@@ -48,6 +76,53 @@ export type {
   ReservationItem,
   ReservationResult,
 } from './budgets/store';
+
+export {
+  ModelRouter,
+  ModelRegistry,
+  defaultModelRegistry,
+  BUILTIN_MODELS,
+} from './routing';
+export type {
+  QualityTier,
+  ModelCapability,
+  ModelPricingDetails,
+  ContextLimits,
+  ModelMetadata,
+  RoutingPolicy,
+  RoutingRequirements,
+  RoutingDecision,
+  RoutingConfig,
+  RouteOptions,
+} from './routing';
+
+export { AgentAnalytics } from './agent';
+export type {
+  AgentStage,
+  AgentContext,
+  AgentCostSummary,
+  DimensionCostSummary,
+} from './agent';
+
+export {
+  TokaEventEmitter,
+  TokaLogger,
+  CostReporter,
+  TokaOpenTelemetryIntegration,
+} from './observability';
+export type {
+  UsageEvent,
+  ReportFilter,
+  CostReportSummary,
+  CostReport,
+  LogLevel,
+  LogFormat,
+  LoggerOptions,
+  TokaEventMap,
+  OpenTelemetrySpanLike,
+  OpenTelemetryTracerLike,
+} from './observability';
+
 export type {
   BudgetAction,
   BudgetContext,
@@ -65,6 +140,7 @@ export type {
   Message,
   MessageRole,
   ToolDefinition,
+  RequestMetadata,
   SDKConfig,
   SDKRequest,
   SDKResponse,
@@ -78,6 +154,7 @@ export type {
 
 import { Toka } from './core/toka';
 import { createSampleConfig } from './config';
+
 export function createTokaWithSampleConfig(): Toka {
   return new Toka(createSampleConfig());
 }
