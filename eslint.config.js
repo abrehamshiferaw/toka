@@ -4,6 +4,7 @@ module.exports = [
     languageOptions: {
       ecmaVersion: 2020,
       sourceType: 'module',
+      parser: require('@typescript-eslint/parser'),
       globals: {
         console: 'readonly',
         process: 'readonly',

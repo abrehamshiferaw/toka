@@ -18,9 +18,15 @@ describe('API Client', () => {
     });
 
     it('should throw error when required parameters are missing', async () => {
-      await expect(callAPI('', 'prompt', 'apiKey')).rejects.toThrow('Model, prompt, and API key are required');
-      await expect(callAPI('model', '', 'apiKey')).rejects.toThrow('Model, prompt, and API key are required');
-      await expect(callAPI('model', 'prompt', '')).rejects.toThrow('Model, prompt, and API key are required');
+      await expect(callAPI('', 'prompt', 'apiKey')).rejects.toThrow(
+        'Model, prompt, and API key are required'
+      );
+      await expect(callAPI('model', '', 'apiKey')).rejects.toThrow(
+        'Model, prompt, and API key are required'
+      );
+      await expect(callAPI('model', 'prompt', '')).rejects.toThrow(
+        'Model, prompt, and API key are required'
+      );
     });
 
     it('should include model name in response', async () => {

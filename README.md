@@ -1,25 +1,8 @@
-<p align="center"><img src="assets/logo.png" alt="Toka AI cost optimization SDK logo" width="180" /></p>
-<h1 align="center">Toka SDK</h1>
-<p align="center"><strong>AI cost optimization SDK for developers</strong><br />Track LLM token usage · Estimate API costs · Control budgets · Optimize model usage</p>
-<p align="center"><a href="https://github.com/sponsors/abrehamshiferaw">💖 Sponsor Toka</a></p>
+# Toka SDK
 
-## What is Toka?
+> Toka is an open-source cost-control and observability layer for LLM applications.
 
-Toka is a lightweight, developer-first **AI cost optimization SDK** for TypeScript and Node.js applications. It helps teams understand and reduce the cost of OpenAI and other LLM API workloads without sacrificing product quality.
-
-### Why support Toka?
-
-Sponsorship helps fund provider integrations, reliable cost data, tests, documentation, caching improvements, budget controls, and production-ready observability for AI applications.
-
-## Features
-
-- Track token usage for every AI request
-- Estimate LLM API costs in real time
-- Enforce per-request and application budgets
-- Reduce redundant calls with in-memory or Redis caching
-- Configure cheaper-model fallback strategies
-- Support multi-model AI workflows
-- Inspect costs, tokens, cache hits, fallbacks, and model selection
+Toka is a TypeScript-first SDK architecture for completion requests, local cost estimation, and optional response caching. **Phase 1 uses a deterministic `MockProvider`; it does not call OpenAI, Gemini, Anthropic, or any external provider.**
 
 ## Installation
 
@@ -30,29 +13,49 @@ npm install toka-sdk
 ## Quick start
 
 ```ts
-import { TokaClient } from 'toka-sdk';
+import { MockProvider, Toka } from 'toka-sdk';
 
-const client = new TokaClient({
-  apiKey: process.env.TOKA_API_KEY,
-  models: ['gpt-4', 'gpt-4o-mini', 'gpt-3.5'],
-  maxCostPerRequest: 0.05,
-  cache: true
+const toka = new Toka(
+  { models: ['demo-model'], maxCostPerRequest: 1 },
+  undefined,
+  new MockProvider(),
+);
+
+const result = await toka.complete({
+  model: 'demo-model',
+  messages: [{ role: 'user', content: 'Hello, Toka!' }],
 });
 
-const response = await client.chat({
-  messages: [{ role: 'user', content: 'Hello world' }]
-});
-
-console.log(response.text, response.cost, response.tokens, response.modelUsed);
+console.log(result.text);
+console.log(result.provider); // mock
+console.log(result.costSource); // estimated
 ```
 
-## Ideal for
+`Toka.complete()` is the primary API. The older `request(model, prompt, options?)` method remains as an intentional compatibility wrapper and is marked for migration in the types.
 
-AI SaaS products, chatbots, LLM-powered web apps, prompt workflows, high-volume AI APIs, and startups monitoring AI infrastructure spend.
+## Implemented in Phase 1
 
-## Contributing and sponsorship
+The package includes typed request and response contracts, an `AIProvider` boundary, deterministic mock-provider infrastructure, local estimated cost tracking, validated configuration, typed errors, SHA-256 cache keys that do not contain raw prompts, and an asynchronous `MemoryCache` with TTL support. It builds as a CommonJS package with declarations and source maps.
 
-Bug reports, provider integrations, documentation, tests, and performance improvements are welcome. If Toka helps your product, please [star the repository](https://github.com/abrehamshiferaw/toka), contribute, or [sponsor Toka](https://github.com/sponsors/abrehamshiferaw).
+## Not production-ready yet
+
+Real provider integrations, actual provider token usage, production Redis, production-grade cost accuracy, advanced routing, full observability, OpenTelemetry, and provider-specific error mapping are **not implemented**. `RedisCache` is an explicit unavailable adapter boundary and performs no network calls. Mock output and estimated usage must not be treated as evidence of a real provider request.
+
+## Configuration and privacy
+
+`models` must be non-empty, `maxCostPerRequest` must be finite and greater than zero, and `cacheTTL` must be finite and non-negative. `loadConfig()` reads JSON plus `TOKA_API_KEY`, `TOKA_MODELS`, `TOKA_MAX_COST`, and `TOKA_CACHE_TTL`; environment values take precedence. The API key is optional for the mock provider and reserved for future integrations.
+
+Toka does not log prompts, API keys, authorization headers, or send telemetry. Cache keys are hashes of canonicalized request data.
+
+## Development
+
+```bash
+npm install
+npm run check
+npm run smoke
+```
+
+CI runs installation, linting, formatting checks, type checking, tests with coverage, build, and a built-package import smoke test.
 
 ## License
 

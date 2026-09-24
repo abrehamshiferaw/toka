@@ -1,53 +1,103 @@
-/**
- * SDK Configuration interface
- * Defines the structure for Toka SDK configuration
- */
+export type MessageRole = 'system' | 'user' | 'assistant' | 'tool';
+
+export interface Message {
+  role: MessageRole;
+  content: string;
+  name?: string;
+  toolCallId?: string;
+}
+export interface ToolDefinition {
+  name: string;
+  description?: string;
+  parameters?: Record<string, unknown>;
+}
+export interface RequestMetadata {
+  requestId?: string;
+  [key: string]: string | number | boolean | undefined;
+}
+export interface SDKRequest {
+  model: string;
+  messages: Message[];
+  temperature?: number;
+  maxTokens?: number;
+  tools?: ToolDefinition[];
+  metadata?: RequestMetadata;
+}
+export interface ProviderRequest extends SDKRequest {}
+export interface ProviderUsage {
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+  isEstimated: boolean;
+}
+export interface ProviderResponse {
+  text: string;
+  provider: string;
+  modelUsed: string;
+  usage?: ProviderUsage;
+  metadata?: Record<string, unknown>;
+}
+export interface SDKResponse {
+  text: string;
+  provider: string;
+  modelUsed: string;
+  inputTokens?: number;
+  outputTokens?: number;
+  totalTokens?: number;
+  cost?: number;
+  costSource?: 'estimated' | 'provider' | 'unknown';
+  cacheHit: boolean;
+  latencyMs?: number;
+}
+export interface Cache {
+  get<T>(key: string): Promise<T | null>;
+  set<T>(key: string, value: T, ttlMs?: number): Promise<void>;
+  has(key: string): Promise<boolean>;
+  delete(key: string): Promise<void>;
+  clear(): Promise<void>;
+}
 export interface SDKConfig {
-  /** API key for authentication with AI provider */
-  apiKey: string;
-  /** List of available AI models */
+  apiKey?: string;
   models: string[];
-  /** Maximum cost allowed per request in USD */
   maxCostPerRequest: number;
-  /** Optional cache time-to-live in milliseconds (default: 5 minutes) */
   cacheTTL?: number;
 }
-
-/**
- * Cache interface for caching responses
- */
-export interface Cache {
-  get<T>(key: string): T | null;
-  set<T>(key: string, value: T, ttl?: number): void;
-  has(key: string): boolean;
+export interface AIProvider {
+  readonly name: string;
+  complete(request: ProviderRequest): Promise<ProviderResponse>;
 }
-
-/**
- * SDK Request interface
- * Defines the structure for API requests
- */
-export interface SDKRequest {
-  /** The AI model to use for this request */
-  model: string;
-  /** The prompt text to send to the AI model */
-  prompt: string;
-  /** Optional additional parameters for the request */
-  options?: any;
+export interface LegacyRequestOptions {
+  temperature?: number;
+  maxTokens?: number;
+  tools?: ToolDefinition[];
+  metadata?: RequestMetadata;
+  [key: string]: unknown;
 }
-
-/**
- * SDK Response interface
- * Defines the structure for API responses
- */
-export interface SDKResponse {
-  /** The generated text response from the AI model */
-  text: string;
-  /** Number of tokens used in the request/response */
+export interface LegacySDKResponse extends SDKResponse {
   tokens: number;
-  /** Estimated cost of this request in USD */
-  cost: number;
-  /** The model that was actually used for this request */
-  modelUsed: string;
-  /** Whether this response was served from cache */
-  cacheHit?: boolean;
+}
+export const DEFAULT_CACHE_TTL_MS = 5 * 60 * 1000;
+export type CacheEntry<T> = { value: T; expiresAt: number | null };
+export type Config = SDKConfig;
+export type Request = SDKRequest;
+export type Response = SDKResponse;
+export type ChatMessage = Message;
+
+export function getMessageText(messages: Message[]): string {
+  return messages.map((message) => message.content).join('\n');
+}
+export function cloneConfig(config: SDKConfig): SDKConfig {
+  return { ...config, models: [...config.models] };
+}
+export function normalizeLegacyOptions(
+  options?: LegacyRequestOptions
+): Partial<SDKRequest> {
+  return options
+    ? {
+        temperature: options.temperature,
+        maxTokens: options.maxTokens,
+        tools: options.tools,
+        metadata: options.metadata,
+      }
+    : {};
 }
