@@ -1,3 +1,31 @@
+import type {
+  BudgetAction,
+  BudgetContext,
+  BudgetDecision,
+  BudgetLimitConfig,
+  BudgetLimitStatus,
+  BudgetPolicy,
+  BudgetScope,
+  BudgetStatus,
+  BudgetViolation,
+  BudgetWarning,
+  ScopeLimit,
+} from '../budgets/types';
+
+export type {
+  BudgetAction,
+  BudgetContext,
+  BudgetDecision,
+  BudgetLimitConfig,
+  BudgetLimitStatus,
+  BudgetPolicy,
+  BudgetScope,
+  BudgetStatus,
+  BudgetViolation,
+  BudgetWarning,
+  ScopeLimit,
+};
+
 export type MessageRole = 'system' | 'user' | 'assistant' | 'tool';
 export interface Message {
   role: MessageRole;
@@ -21,6 +49,7 @@ export interface SDKRequest {
   maxTokens?: number;
   tools?: ToolDefinition[];
   metadata?: RequestMetadata;
+  budgetContext?: BudgetContext;
 }
 export interface ProviderRequest extends SDKRequest {}
 export interface ProviderUsage {
@@ -50,6 +79,8 @@ export interface SDKResponse {
   costSource: 'actual' | 'estimated';
   cacheHit: boolean;
   latencyMs: number;
+  budgetDecision?: BudgetDecision;
+  budgetWarning?: BudgetWarning;
 }
 export interface Cache {
   get<T>(key: string): Promise<T | null>;
@@ -66,7 +97,8 @@ export interface RetryConfig {
 export interface SDKConfig {
   apiKey?: string;
   models: string[];
-  maxCostPerRequest: number;
+  maxCostPerRequest?: number;
+  budgets?: BudgetPolicy;
   cacheTTL?: number;
   timeoutMs?: number;
   retry?: RetryConfig;
@@ -109,6 +141,7 @@ export function cloneConfig(config: SDKConfig): SDKConfig {
   return {
     ...config,
     models: [...config.models],
+    budgets: config.budgets ? { ...config.budgets } : undefined,
     retry: config.retry ? { ...config.retry } : undefined,
     pricing: config.pricing ? { ...config.pricing } : undefined,
   };

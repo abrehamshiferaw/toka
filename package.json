@@ -7,8 +7,9 @@
   "exports": { ".": { "types": "./dist/index.d.ts", "require": "./dist/index.js" } },
   "files": ["dist", "README.md", "LICENSE", "assets"],
   "scripts": {
+    "dev": "ts-node src/server.ts",
     "build": "tsc",
-    "start": "ts-node src/index.ts",
+    "start": "node dist/server.js",
     "test": "jest --runInBand",
     "test:coverage": "jest --runInBand --coverage",
     "lint": "eslint src/**/*.ts",

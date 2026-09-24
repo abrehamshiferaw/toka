@@ -1,3 +1,9 @@
+import type {
+  BudgetAction,
+  BudgetDecision,
+  BudgetScope,
+} from '../budgets/types';
+
 export type TokaErrorCode =
   | 'TOKA_ERROR'
   | 'CONFIGURATION_ERROR'
@@ -131,10 +137,36 @@ export class TokaProviderServerError extends TokaProviderError {
     Object.defineProperty(this, 'code', { value: 'PROVIDER_SERVER_ERROR' });
   }
 }
+export interface TokaBudgetErrorOptions extends TokaErrorOptions {
+  scope?: BudgetScope;
+  limit?: number;
+  spent?: number;
+  remaining?: number;
+  requestedCost?: number;
+  action?: BudgetAction | 'approval_required';
+  decision?: BudgetDecision;
+}
+
 export class TokaBudgetExceededError extends TokaError {
-  constructor(message: string, options?: TokaErrorOptions) {
+  readonly scope?: BudgetScope;
+  readonly limit?: number;
+  readonly spent?: number;
+  readonly remaining?: number;
+  readonly requestedCost?: number;
+  readonly action?: BudgetAction | 'approval_required';
+  readonly decision?: BudgetDecision;
+
+  constructor(message: string, options?: TokaBudgetErrorOptions) {
     super(message, 'BUDGET_EXCEEDED', options);
     this.name = 'TokaBudgetExceededError';
+    this.scope = options?.scope;
+    this.limit = options?.limit;
+    this.spent = options?.spent;
+    this.remaining = options?.remaining;
+    this.requestedCost = options?.requestedCost;
+    this.action = options?.action;
+    this.decision = options?.decision;
+    Object.setPrototypeOf(this, new.target.prototype);
   }
 }
 export class TokaCacheError extends TokaError {
