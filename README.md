@@ -2,7 +2,7 @@
 
 > Toka is an open-source cost-control and observability layer for LLM applications.
 
-Toka is a TypeScript-first SDK architecture for completion requests, local cost estimation, and optional response caching. **Phase 1 uses a deterministic `MockProvider`; it does not call OpenAI, Gemini, Anthropic, or any external provider.**
+Toka is a TypeScript-first SDK for completion requests, provider-reported token usage, pricing-based cost calculation, and optional response caching. **Phase 2 implements one real OpenAI-compatible provider.** Gemini, Anthropic, Azure, Groq, Mistral, Ollama, Redis, routing, and telemetry integrations are not included.
 
 ## Installation
 
@@ -10,42 +10,80 @@ Toka is a TypeScript-first SDK architecture for completion requests, local cost 
 npm install toka-sdk
 ```
 
-## Quick start
+## Real provider quick start
+
+Set `OPENAI_API_KEY` in the process environment, then provide an `OpenAIProvider` explicitly:
 
 ```ts
-import { MockProvider, Toka } from 'toka-sdk';
+import { OpenAIProvider, Toka } from 'toka-sdk';
+
+const provider = new OpenAIProvider({
+  apiKey: process.env.OPENAI_API_KEY,
+  timeoutMs: 30_000,
+  retry: { maxRetries: 2, exponentialBackoff: true },
+});
 
 const toka = new Toka(
-  { models: ['demo-model'], maxCostPerRequest: 1 },
+  { models: ['gpt-4o-mini'], maxCostPerRequest: 1 },
   undefined,
-  new MockProvider(),
+  provider,
 );
 
 const result = await toka.complete({
-  model: 'demo-model',
+  model: 'gpt-4o-mini',
   messages: [{ role: 'user', content: 'Hello, Toka!' }],
 });
 
-console.log(result.text);
-console.log(result.provider); // mock
-console.log(result.costSource); // estimated
+console.log({
+  model: result.modelUsed,
+  tokens: result.totalTokens,
+  inputCost: result.inputCost,
+  outputCost: result.outputCost,
+  cost: result.cost,
+  costSource: result.costSource,
+});
 ```
 
-`Toka.complete()` is the primary API. The older `request(model, prompt, options?)` method remains as an intentional compatibility wrapper and is marked for migration in the types.
+The provider sends `POST /v1/chat/completions`, extracts the returned model and usage, and never logs the API key or full prompt. `Toka.complete()` remains the primary API; the older `request(model, prompt, options?)` method is retained as a compatibility wrapper.
 
-## Implemented in Phase 1
+## Pricing and usage
 
-The package includes typed request and response contracts, an `AIProvider` boundary, deterministic mock-provider infrastructure, local estimated cost tracking, validated configuration, typed errors, SHA-256 cache keys that do not contain raw prompts, and an asynchronous `MemoryCache` with TTL support. It builds as a CommonJS package with declarations and source maps.
+Built-in standard OpenAI pricing is centralized in `src/cost/pricing.ts` and is recorded per model as input and output USD prices per one million tokens. The current registry includes `gpt-4o-mini`, `gpt-4o`, `gpt-4.1`, `gpt-4.1-mini`, `gpt-4.1-nano`, and `gpt-3.5-turbo`. Prices are sourced from the [OpenAI API pricing documentation](https://developers.openai.com/api/docs/pricing) and include a registry version for maintenance.
 
-## Not production-ready yet
+When the provider returns usage, `costSource` is `actual` and cost is calculated as:
 
-Real provider integrations, actual provider token usage, production Redis, production-grade cost accuracy, advanced routing, full observability, OpenTelemetry, and provider-specific error mapping are **not implemented**. `RedisCache` is an explicit unavailable adapter boundary and performs no network calls. Mock output and estimated usage must not be treated as evidence of a real provider request.
+```text
+inputCost = inputTokens / 1,000,000 × inputPricePerMillionTokens
+outputCost = outputTokens / 1,000,000 × outputPricePerMillionTokens
+cost = inputCost + outputCost
+```
 
-## Configuration and privacy
+If usage is absent, the SDK makes a clearly marked local estimate from message and response text and returns `costSource: 'estimated'`. It never labels estimated usage as actual. Unknown provider/model pricing throws `TokaPricingError`; no default price is silently applied.
 
-`models` must be non-empty, `maxCostPerRequest` must be finite and greater than zero, and `cacheTTL` must be finite and non-negative. `loadConfig()` reads JSON plus `TOKA_API_KEY`, `TOKA_MODELS`, `TOKA_MAX_COST`, and `TOKA_CACHE_TTL`; environment values take precedence. The API key is optional for the mock provider and reserved for future integrations.
+Custom pricing overrides are keyed by `provider:model`:
 
-Toka does not log prompts, API keys, authorization headers, or send telemetry. Cache keys are hashes of canonicalized request data.
+```ts
+const toka = new Toka({
+  models: ['my-model'],
+  maxCostPerRequest: 1,
+  pricing: {
+    'openai:my-model': {
+      inputPricePerMillionTokens: 1,
+      outputPricePerMillionTokens: 3,
+    },
+  },
+}, undefined, provider);
+```
+
+## Errors, timeouts, and retries
+
+Provider failures are normalized into typed errors for authentication, invalid requests/models, rate limits, timeouts, network failures, provider 5xx responses, and pricing failures. Rate-limit responses preserve `Retry-After` when supplied. Retries are bounded, default to two retries with exponential backoff, and apply only to rate limits, timeouts, network failures, and provider 5xx responses. Authentication and malformed-request failures are never retried.
+
+The provider default timeout is 30 seconds and can be overridden. Retry delays are capped at 30 seconds. Tests inject fetch and sleep functions, so CI makes no paid provider calls.
+
+## Phase 1 compatibility and limitations
+
+The deterministic `MockProvider` remains available for local tests and examples. Its usage and cost are explicitly estimated. `RedisCache` remains an unavailable adapter boundary and performs no network calls. Advanced routing, daily or monthly budgets, agent context, OpenTelemetry, dashboards, and additional provider adapters belong to later phases.
 
 ## Development
 
@@ -55,7 +93,7 @@ npm run check
 npm run smoke
 ```
 
-CI runs installation, linting, formatting checks, type checking, tests with coverage, build, and a built-package import smoke test.
+The quality gate runs linting, formatting checks, type checking, unit and provider contract tests with coverage, build, and a built-package import smoke test.
 
 ## License
 
