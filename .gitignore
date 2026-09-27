@@ -14,3 +14,5 @@ coverage/
 *.tar.gz
 package-lock.json
 yarn.lock
+bun.lock
+metadata.json

@@ -1,0 +1,96 @@
+name: Publish to npm
+
+on:
+  release:
+    types: [published]
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Perform a dry-run publish without pushing to npm registry'
+        required: false
+        type: boolean
+        default: false
+      tag:
+        description: 'npm dist-tag (latest, beta, next)'
+        required: false
+        default: 'latest'
+
+permissions:
+  contents: write
+  id-token: write
+  packages: write
+
+jobs:
+  validate:
+    name: Validate and Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Code formatting check
+        run: npm run format:check || true
+
+      - name: Static lint check
+        run: npm run lint
+
+      - name: TypeScript typecheck
+        run: npm run typecheck
+
+      - name: Run test suite with coverage
+        run: npm run test:coverage
+
+      - name: Build production package
+        run: npm run build
+
+      - name: Run smoke test
+        run: npm run smoke
+
+  publish:
+    name: Publish to npm Registry
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20.x with npm registry
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          registry-url: 'https://registry.npmjs.org/'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build package distribution
+        run: npm run build
+
+      - name: Publish to npm (Dry Run)
+        if: ${{ github.event.inputs.dry_run == 'true' }}
+        run: |
+          echo "Executing npm publish dry-run..."
+          npm publish --dry-run --tag ${{ github.event.inputs.tag || 'latest' }} --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish to npm (Live)
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: |
+          echo "Publishing package to npm..."
+          npm publish --tag ${{ github.event.inputs.tag || 'latest' }} --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

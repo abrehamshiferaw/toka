@@ -4,6 +4,12 @@ export type { TokaOptions } from './core/toka';
 export { MockProvider, createMockProvider } from './providers/mock';
 export { OpenAIProvider } from './providers/openai';
 export type { OpenAIProviderOptions } from './providers/openai';
+export { AnthropicProvider } from './providers/anthropic';
+export type { AnthropicProviderOptions } from './providers/anthropic';
+export { GeminiProvider } from './providers/gemini';
+export type { GeminiProviderOptions } from './providers/gemini';
+export { MultiProvider } from './providers/multi';
+export type { MultiProviderOptions } from './providers/multi';
 
 export { MemoryCache } from './cache/memoryCache';
 export { RedisCache, createRedisCache } from './cache/redisCache';

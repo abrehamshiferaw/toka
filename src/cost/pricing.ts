@@ -75,10 +75,138 @@ const OPENAI_PRICING: readonly ModelPricing[] = [
     currency: 'USD',
     version: '2026-09',
   },
+  {
+    provider: 'openai',
+    model: 'gpt-4',
+    inputPricePerMillionTokens: 30,
+    outputPricePerMillionTokens: 60,
+    currency: 'USD',
+    version: '2026-09',
+  },
+  {
+    provider: 'openai',
+    model: 'o1',
+    inputPricePerMillionTokens: 15,
+    outputPricePerMillionTokens: 60,
+    currency: 'USD',
+    version: '2026-09',
+  },
+  {
+    provider: 'openai',
+    model: 'o3-mini',
+    inputPricePerMillionTokens: 1.1,
+    outputPricePerMillionTokens: 4.4,
+    currency: 'USD',
+    version: '2026-09',
+  },
+];
+
+const ANTHROPIC_PRICING: readonly ModelPricing[] = [
+  {
+    provider: 'anthropic',
+    model: 'claude-3-5-sonnet',
+    inputPricePerMillionTokens: 3.0,
+    outputPricePerMillionTokens: 15.0,
+    currency: 'USD',
+    version: '2026-09',
+  },
+  {
+    provider: 'anthropic',
+    model: 'claude-3-5-sonnet-20241022',
+    inputPricePerMillionTokens: 3.0,
+    outputPricePerMillionTokens: 15.0,
+    currency: 'USD',
+    version: '2026-09',
+  },
+  {
+    provider: 'anthropic',
+    model: 'claude-3-5-haiku',
+    inputPricePerMillionTokens: 0.8,
+    outputPricePerMillionTokens: 4.0,
+    currency: 'USD',
+    version: '2026-09',
+  },
+  {
+    provider: 'anthropic',
+    model: 'claude-3-opus',
+    inputPricePerMillionTokens: 15.0,
+    outputPricePerMillionTokens: 75.0,
+    currency: 'USD',
+    version: '2026-09',
+  },
+];
+
+const GEMINI_PRICING: readonly ModelPricing[] = [
+  {
+    provider: 'gemini',
+    model: 'gemini-3.8-flash',
+    inputPricePerMillionTokens: 0.075,
+    outputPricePerMillionTokens: 0.3,
+    currency: 'USD',
+    version: '2026-09',
+  },
+  {
+    provider: 'gemini',
+    model: 'gemini-2.5-flash',
+    inputPricePerMillionTokens: 0.075,
+    outputPricePerMillionTokens: 0.3,
+    currency: 'USD',
+    version: '2026-09',
+  },
+  {
+    provider: 'gemini',
+    model: 'gemini-flash-latest',
+    inputPricePerMillionTokens: 0.075,
+    outputPricePerMillionTokens: 0.3,
+    currency: 'USD',
+    version: '2026-09',
+  },
+  {
+    provider: 'gemini',
+    model: 'gemini-3.1-pro-preview',
+    inputPricePerMillionTokens: 1.25,
+    outputPricePerMillionTokens: 5.0,
+    currency: 'USD',
+    version: '2026-09',
+  },
+  {
+    provider: 'gemini',
+    model: 'gemini-2.5-pro',
+    inputPricePerMillionTokens: 1.25,
+    outputPricePerMillionTokens: 5.0,
+    currency: 'USD',
+    version: '2026-09',
+  },
+];
+
+const DEEPSEEK_PRICING: readonly ModelPricing[] = [
+  {
+    provider: 'deepseek',
+    model: 'deepseek-chat',
+    inputPricePerMillionTokens: 0.14,
+    outputPricePerMillionTokens: 0.28,
+    currency: 'USD',
+    version: '2026-09',
+  },
+  {
+    provider: 'deepseek',
+    model: 'deepseek-reasoner',
+    inputPricePerMillionTokens: 0.55,
+    outputPricePerMillionTokens: 2.19,
+    currency: 'USD',
+    version: '2026-09',
+  },
+];
+
+const ALL_PRICING: readonly ModelPricing[] = [
+  ...OPENAI_PRICING,
+  ...ANTHROPIC_PRICING,
+  ...GEMINI_PRICING,
+  ...DEEPSEEK_PRICING,
 ];
 
 export const defaultPricingRegistry = new Map(
-  OPENAI_PRICING.map((pricing) => [
+  ALL_PRICING.map((pricing) => [
     `${pricing.provider}:${pricing.model}`,
     pricing,
   ])

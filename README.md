@@ -1,269 +1,362 @@
-# Toka SDK
+# Toka SDK ⚡
 
-> **Toka** is an open-source cost-control, smart model routing, and observability engine specifically engineered for LLM applications and AI code agents.
+<p align="center">
+  <img src="assets/logo.png" alt="Toka Logo" width="128" height="128" onerror="this.style.display='none'"/>
+</p>
 
-Toka sits between your autonomous agents and LLM providers (OpenAI, Anthropic, Google, and local models) to ensure transparent spending, eliminate silent downgrades, enforce multi-scope budgets, provide revision-aware caching, and deliver deep cost intelligence.
+<p align="center">
+  <strong>Production-Grade LLM Cost Control, Smart Model Routing, Multi-Scope Budgets & Observability Architecture</strong>
+</p>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/toka-sdk"><img src="https://img.shields.io/npm/v/toka-sdk.svg?style=flat-square&color=3b82f6" alt="npm version" /></a>
+  <a href="https://www.npmjs.com/package/toka-sdk"><img src="https://img.shields.io/npm/dm/toka-sdk.svg?style=flat-square&color=10b981" alt="npm downloads" /></a>
+  <a href="https://github.com/abrehamshiferaw/toka/stargazers"><img src="https://img.shields.io/github/stars/abrehamshiferaw/toka?style=flat-square&logo=github&color=eab308" alt="GitHub stars" /></a>
+  <a href="https://github.com/abrehamshiferaw/toka/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/abrehamshiferaw/toka/ci.yml?branch=main&style=flat-square" alt="CI Status" /></a>
+  <a href="https://github.com/sponsors/abrehamshiferaw"><img src="https://img.shields.io/badge/Sponsor-GitHub%20Sponsors-ff69b4?style=flat-square&logo=github-sponsors" alt="Sponsor" /></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square" alt="License" /></a>
+  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-Strict-blue?style=flat-square&logo=typescript" alt="TypeScript" /></a>
+  <a href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fabrehamshiferaw%2Ftoka"><img src="https://img.shields.io/badge/Deploy-Vercel-black?style=flat-square&logo=vercel" alt="Deploy to Vercel" /></a>
+</p>
+
+---
+
+## 🌟 Why Toka?
+
+AI agents, autonomous coding bots, and LLM applications burn through engineering budgets rapidly due to unbounded loops, unmonitored subagents, and silent model escalations.
+
+**Toka** is a developer-first control plane that sits between your application/agents and LLM providers (**OpenAI, Anthropic Claude, Google Gemini, DeepSeek**). It guarantees strict budget enforcement, eliminates silent downgrades with explainable routing, protects secrets with semantic caching, and provides full OpenTelemetry-compliant observability.
+
+### Key Capabilities
+
+- 💰 **Multi-Scope Budget Engine**: Hierarchical hard/soft limits across Request, Task, Session, Day, Month, and Custom dimensions.
+- 🔀 **Explainable Smart Routing**: Policies (`cheapest`, `balanced`, `quality-first`, `strict-model`) with transparent justification logs and zero silent degradation.
+- 🚀 **Production Multi-Provider**: Built-in native support for **OpenAI** (`gpt-4o`, `o1`, `o3-mini`), **Anthropic** (`claude-3-5-sonnet`, `claude-3-5-haiku`), **Google Gemini** (`gemini-2.5-flash`, `gemini-2.5-pro`), and **DeepSeek** (`deepseek-chat`, `deepseek-reasoner`).
+- ⚡ **Revision-Aware Semantic Caching**: SHA-256 hashed cache keys with repository commit awareness, Redis & Memory adapters, auto-bypass for sensitive PII/secrets.
+- 📊 **OpenTelemetry & GenAI Standards**: First-class tracing, structured usage events, CSV/JSON exports, and executive cost summaries.
+- 🛡️ **Autonomous Agent Safety**: Human-in-the-loop approval escalation, fallback ladders, and rate-limiting resilience.
+- ☁️ **Deploy Anywhere**: Ready for **Vercel** serverless, Node.js microservices, Docker containers, and edge runtimes.
+
+---
+
+## 🚀 One-Click Deploy to Vercel
+
+Deploy the interactive live Toka demo and API directly to Vercel with zero setup:
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fabrehamshiferaw%2Ftoka)
+
+Or clone and deploy via Vercel CLI:
+```bash
+git clone https://github.com/abrehamshiferaw/toka.git
+cd toka
+npm install
+vercel
+```
+
+The repo includes a pre-configured `vercel.json` and serverless handler in `api/index.ts` that serves both the interactive management dashboard and the REST API.
+
+---
+
+## 📦 Installation
+
+```bash
+# npm
+npm install toka-sdk
+
+# yarn
+yarn add toka-sdk
+
+# pnpm
+pnpm add toka-sdk
+
+# bun
+bun add toka-sdk
+```
 
 ---
 
 ## ⚡ 1-Minute Quick Start
 
-```bash
-npm install toka-sdk
-```
-
 ```typescript
-import { Toka, OpenAIProvider } from 'toka-sdk';
+import { Toka, MultiProvider } from 'toka-sdk';
 
+// Initialize with multi-provider routing (OpenAI, Anthropic, Gemini, DeepSeek)
 const toka = new Toka({
-  apiKey: process.env.OPENAI_API_KEY,
-  models: ['gpt-4o', 'gpt-4o-mini'],
-  routing: 'balanced', // Automatically optimizes quality & cost
+  routing: 'balanced', // automatically picks optimal model
   budgets: {
-    perRequest: 0.10,
-    perTask: 0.50,
+    perRequest: 0.05,  // $0.05 max per single call
+    perTask: 0.50,     // $0.50 max per task
+    perDay: 10.00,     // $10.00 max daily spend
   },
 });
 
+// Autonomous agent execution
 const response = await toka.complete({
-  model: 'gpt-4o',
-  messages: [{ role: 'user', content: 'Generate a TypeScript function.' }],
+  model: 'gpt-4o', // preferred model
+  messages: [
+    { role: 'user', content: 'Analyze this codebase architecture and generate tests.' }
+  ],
   agentContext: {
-    agentId: 'coder-bot',
-    taskId: 'task-101',
-    stage: 'generation',
+    agentId: 'reviewer-agent-01',
+    taskId: 'pr-audit-452',
+    stage: 'code-review',
     repository: 'github.com/acme/backend',
   },
 });
 
-console.log(`Model: ${response.modelUsed}`);
-console.log(`Cost:  $${response.cost.toFixed(6)}`);
-console.log(`Why:   ${response.routingDecision?.reason}`);
+console.log(`Executed by:  ${response.modelUsed}`);
+console.log(`Cost:         $${response.cost.toFixed(6)}`);
+console.log(`Routing Why:  ${response.routingDecision?.reason}`);
+console.log(`Cache Status: ${response.cached ? 'HIT (Saved $' + response.costSaved + ')' : 'MISS'}`);
 ```
 
 ---
 
-## 🎯 Architecture & Phases
+## 🏛️ System Architecture
 
 ```
 ┌────────────────────────────────────────────────────────┐
-│                      AI / Code Agent                   │
+│               Autonomous Code / AI Agent               │
 └───────────────────────────┬────────────────────────────┘
-                            │ (AgentContext & Request)
+                            │ (AgentContext + Messages)
                             ▼
 ┌────────────────────────────────────────────────────────┐
 │                   Toka Control Engine                  │
 │                                                        │
-│  [Phase 4] Smart Model Router                          │
-│     ├── Policies: cheapest | balanced | quality-first  │
-│     └── Transparent Explanations & Savings             │
+│  [1] Sensitive Data & Key Normalizer                   │
+│      ├── Regex PII & Secret Detection                  │
+│      └── SHA-256 Commit-Aware Cache Key                │
 │                                                        │
-│  [Phase 6] Production Caching                          │
-│     ├── SHA-256 Hashed Keys (Repo & Commit-Aware)      │
-│     ├── Redis & Memory Adapters + Metrics              │
-│     └── Sensitive Data Protection & Auto-Bypass        │
+│  [2] Semantic & Revision Cache (Redis / In-Memory)     │
+│      └── Instant Hit ➔ Returns Cached Response (Free)  │
 │                                                        │
-│  [Phase 3] Multi-Scope Budget Guard                    │
-│     ├── Scopes: Request, Task, Session, Day, Month     │
-│     └── Actions: Block, Warn, Fallback, Human Approval │
+│  [3] Multi-Scope Budget Guard                          │
+│      ├── Request, Task, Session, Daily, Monthly        │
+│      └── Policy: Block | Fallback | Warn | Escalate    │
 │                                                        │
-│  [Phase 5 & 7] Cost Intelligence & Observability       │
-│     ├── Multi-Dimensional Analytics (Agent/Repo/Stage) │
-│     ├── Standardized UsageEvents & JSON Logger         │
-│     └── OpenTelemetry Semantic GenAI Conventions       │
+│  [4] Transparent Smart Model Router                    │
+│      ├── Policies: cheapest | balanced | quality-first │
+│      └── Zero Silent Downgrades with Decision Audit    │
+│                                                        │
+│  [5] Multi-Provider Dispatcher                         │
+│      ├── OpenAI (GPT-4o, o1, o3-mini)                  │
+│      ├── Anthropic Claude (3.5 Sonnet, 3.5 Haiku)      │
+│      ├── Google Gemini (2.5 Flash, 2.5 Pro)            │
+│      └── DeepSeek (Chat, Reasoner)                     │
+│                                                        │
+│  [6] Observability & Analytics Engine                  │
+│      ├── OpenTelemetry Semantic GenAI Spans            │
+│      ├── Structured UsageEvents & JSON Logger          │
+│      └── Multi-Dimensional Cost Aggregation            │
 └───────────────────────────┬────────────────────────────┘
-                            │ (Optimized LLM Request)
+                            │
                             ▼
 ┌────────────────────────────────────────────────────────┐
-│             Real Providers (OpenAI, Mock, etc.)        │
+│             Real Production LLM Providers              │
+│       OpenAI  •  Anthropic  •  Gemini  •  DeepSeek     │
 └────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🧭 Phase 4: Smart Model Routing
+## 🤖 Real Production AI Providers
 
-Replace brittle model lists with intelligent, policy-driven model selection.
+Toka includes production-tested adapters with built-in retries, exponential backoff, rate-limit header parsing, and timeout controls:
 
-### Routing Policies
-
-| Policy | Behavior | Best Used For |
-|---|---|---|
-| `strict-model` | Never changes the requested model; fails or stays strictly on requested model. | Production pipelines requiring exact model behavior. |
-| `cheapest` | Identifies lowest-cost model meeting capability and token context limits. | High-volume tasks, extraction, formatting, classifications. |
-| `balanced` | Balances quality tier and cost (standard/fast tier) without extreme economy degradation. | General code agent execution, discovery, and testing. |
-| `quality-first` | Prioritizes flagship/frontier models and selects the most cost-effective among top tier. | Complex system architecture, difficult debugging, security audits. |
-
-### Transparent Explanations & Zero Silent Downgrades
-
-Every routing decision explains:
-1. **Requested model**
-2. **Actual model**
-3. **Why it changed**
-4. **Estimated cost & savings**
-
+### OpenAI
 ```typescript
-const res = await toka.complete({
-  model: 'gpt-4o',
-  messages: [{ role: 'user', content: 'Format table' }],
-  routing: 'cheapest',
+import { Toka, OpenAIProvider } from 'toka-sdk';
+
+const toka = new Toka({
+  provider: new OpenAIProvider({
+    apiKey: process.env.OPENAI_API_KEY,
+    timeoutMs: 30_000,
+  }),
 });
+```
 
-console.log(res.routingDecision);
-// {
-//   requestedModel: 'gpt-4o',
-//   actualModel: 'gpt-4o-mini',
-//   policy: 'cheapest',
-//   reason: "Routed from 'gpt-4o' to 'gpt-4o-mini' via 'cheapest' policy. Estimated savings: $0.002400 while meeting capability criteria.",
-//   estimatedCost: 0.00015,
-//   estimatedSavings: 0.0024,
-//   changed: true
-// }
+### Anthropic Claude
+```typescript
+import { Toka, AnthropicProvider } from 'toka-sdk';
+
+const toka = new Toka({
+  provider: new AnthropicProvider({
+    apiKey: process.env.ANTHROPIC_API_KEY,
+  }),
+});
+```
+
+### Google Gemini
+```typescript
+import { Toka, GeminiProvider } from 'toka-sdk';
+
+const toka = new Toka({
+  provider: new GeminiProvider({
+    apiKey: process.env.GEMINI_API_KEY,
+  }),
+});
+```
+
+### Dynamic MultiProvider
+```typescript
+import { Toka, MultiProvider } from 'toka-sdk';
+
+// Routes gpt-* to OpenAI, claude-* to Anthropic, gemini-* to Gemini, deepseek-* to DeepSeek
+const toka = new Toka({
+  provider: new MultiProvider({
+    openaiOptions: { apiKey: process.env.OPENAI_API_KEY },
+    anthropicOptions: { apiKey: process.env.ANTHROPIC_API_KEY },
+    geminiOptions: { apiKey: process.env.GEMINI_API_KEY },
+    deepseekOptions: { apiKey: process.env.DEEPSEEK_API_KEY },
+  }),
+});
 ```
 
 ---
 
-## 🤖 Phase 5: Agent-Aware Context
+## 🧭 Smart Model Routing Policies
 
-Toka tracks execution metadata across your entire autonomous workflow:
+| Policy | Behavior | Ideal Use Cases |
+|---|---|---|
+| `strict-model` | Strictly enforces requested model; errors out if unsupported. | Production compliance, critical regressions. |
+| `cheapest` | Selects lowest-cost model meeting minimum context and capability requirements. | Data extraction, summarization, linting, categorization. |
+| `balanced` | Balances frontier intelligence with cost efficiency (e.g. `gpt-4o-mini`, `claude-3-5-haiku`). | Interactive coding agents, debugging, discovery. |
+| `quality-first` | Selects top frontier models (e.g. `gpt-4o`, `claude-3-5-sonnet`, `gemini-2.5-pro`). | Complex system architecture, security auditing, refactoring. |
 
-### Agent Stages
-- `classification`
-- `discovery`
-- `planning`
-- `generation`
-- `testing`
-- `debugging`
-- `review`
-- `final-response`
-
-### Real-Time Cost Attribution
-Instantly query:
-- *Which agent, repository, task, stage, or model is consuming the most money?*
-- *What is the cost per successful task?*
-
-```typescript
-toka.getCostByAgent('refactor-bot');
-toka.getCostByRepository('acme/webapp');
-toka.getCostByStage('debugging');
-toka.getCostByModel('gpt-4o');
-toka.getTopSpenders();
-// {
-//   topAgent: { id: 'refactor-bot', cost: 1.45 },
-//   topRepository: { id: 'acme/webapp', cost: 2.10 },
-//   topStage: { id: 'debugging', cost: 1.20 }
-// }
+Every response includes complete routing transparency:
+```json
+{
+  "requestedModel": "gpt-4o",
+  "selectedModel": "claude-3-5-haiku",
+  "policy": "balanced",
+  "reason": "Model selected to balance quality and token cost within budget limits",
+  "estimatedCost": 0.0014,
+  "costSavings": 0.0086
+}
 ```
 
 ---
 
-## 🔒 Phase 6: Production Caching & Sensitive Data Protection
+## 💰 Multi-Scope Budget Guard
 
-### Repository & Commit Revision Awareness
-Coding agents frequently modify files. If a prompt runs against commit `c0ffee1`, and a subsequent request runs against commit `c0ffee2`, Toka creates revision-specific keys so **stale code responses are never reused after changes**:
+Prevent agent runaway spending across multi-agent pipelines:
 
 ```typescript
-const key = createCacheKey({
-  model: 'gpt-4o',
-  messages: [{ role: 'user', content: 'Analyze auth.ts' }],
-  agentContext: {
-    repository: 'org/repo',
-    commitSha: 'c0ffee1', // Incorporates into SHA-256 hash
+const toka = new Toka({
+  budgets: {
+    perRequest: 0.10,   // Max $0.10 per call
+    perTask: 1.00,      // Max $1.00 per task run
+    perSession: 5.00,   // Max $5.00 for the user session
+    perDay: 50.00,      // Max $50.00 organizational daily cap
+    custom: {
+      'ci-pipeline': 2.00,
+    },
+    action: 'block',    // 'block' | 'fallback' | 'warn' | 'approval'
   },
 });
 ```
 
-### Sensitive Content Protection
-Toka automatically scans prompts for sensitive tokens (OpenAI keys, GitHub tokens, AWS credentials, private keys, passwords) and checks `sensitive: true`. **Sensitive requests completely bypass caching** so confidential secrets are never retained in shared or Redis caches.
+---
 
-### Redis & Memory Adapters
+## ⚡ Production Caching with Redis & Memory
+
+Save up to 80% on repetitive LLM calls during agent execution:
+
 ```typescript
-import { MemoryCache, RedisCache } from 'toka-sdk';
+import { Toka, RedisCache } from 'toka-sdk';
 
-// LRU in-memory cache with eviction and size limits
-const memory = new MemoryCache({ maxEntries: 1000, ttlMs: 300000 });
+const cache = new RedisCache({
+  host: process.env.REDIS_HOST || 'localhost',
+  port: 6379,
+  ttlSeconds: 86400, // 24 hours
+});
 
-// Production Redis cache adapter
-const redis = new RedisCache({ client: redisClient, namespace: 'agent-cache' });
+const toka = new Toka({ cache });
+
+// Cache keys are Git commit and repository aware!
+const result = await toka.complete({
+  model: 'gpt-4o',
+  messages: [{ role: 'user', content: 'Explain this function.' }],
+  metadata: {
+    repository: 'abrehamshiferaw/toka',
+    commitSha: '988a2d3',
+  },
+});
 ```
 
 ---
 
-## 📊 Phase 7: Observability & OpenTelemetry
+## 📊 Observability & OpenTelemetry
 
-### Standardized `UsageEvent`
-Emitted for every request, fallback, or cache hit:
-- Provider & model (requested vs actual)
-- Token breakdown (input, output, total, cachedInput)
-- Precise cost and source (`actual` vs `estimated`)
-- Latency in milliseconds
-- Cache hit status & savings
-- Agent context (`agentId`, `taskId`, `stage`, `repository`)
+Export metrics and trace agent runs directly to your telemetry backend:
 
-### Structured Events & Reports
 ```typescript
+// Listen to live usage events
 toka.on('usage', (event) => {
-  console.log(`[Usage] ${event.actualModel} - $${event.cost.totalCost.toFixed(6)}`);
+  console.log(`[Usage] Model: ${event.actualModel} | Spent: $${event.cost.totalCost.toFixed(6)}`);
 });
 
+// Listen to budget warnings
 toka.on('budgetWarning', (warning) => {
-  console.warn(`[Budget Warning] Scope ${warning.scope} exceeded threshold!`);
+  console.warn(`[Alert] ${warning.scope} exceeded 80% of limit!`);
 });
 
-// Generate reports and export
+// Generate and export cost reports
 const report = toka.generateReport();
 console.log(toka.formatReportTable());
-fs.writeFileSync('report.json', toka.exportJson());
-fs.writeFileSync('report.csv', toka.exportCsv());
-```
 
-### OpenTelemetry Integration
-Toka provides native attribute mapping for OpenTelemetry GenAI semantic conventions:
-- `gen_ai.system`
-- `gen_ai.request.model`
-- `gen_ai.response.model`
-- `gen_ai.usage.input_tokens`
-- `gen_ai.usage.output_tokens`
-- `toka.cost.usd`
-- `toka.agent.id`
-- `toka.repository`
+// Export JSON or CSV for analytics dashboards
+const jsonReport = toka.exportJson();
+const csvReport = toka.exportCsv();
+```
 
 ---
 
-## 🛠️ Phase 8: CLI Commands
-
-Toka includes a dedicated command-line tool:
+## 🛠️ CLI Toolkit
 
 ```bash
-# View registered models, pricing, quality tier, and context limits
+# Display model registry with pricing and context limits
 npx toka models
 
-# Run a diagnostic check
+# Run full system diagnostics
 npx toka check
 
-# Simulate smart model routing and view transparent explanation
+# Test routing decision explanations
 npx toka route --model gpt-4o --policy cheapest
 
-# Generate a formatted terminal report from exported usage events
+# Generate visual terminal table from event log
 npx toka report events.json
 ```
 
 ---
 
-## 📁 Code Agent Examples
+## 🏆 Comparison: Toka vs Others
 
-Check out `examples/code-agent/`:
-- `basic-agent.ts`: Basic coding agent with context tracking.
-- `budget-aware-agent.ts`: Enforcing task and session budgets.
-- `repository-agent.ts`: Multi-stage agent with commit revision awareness.
-- `approval-flow.ts`: Human-in-the-loop approval thresholds.
-- `model-routing.ts`: Proactive model routing policies.
-- `observability.ts`: Structured events, JSON/CSV exports, and OpenTelemetry.
+| Feature | Toka SDK | LangChain | LiteLLM | Portkey |
+|---|:---:|:---:|:---:|:---:|
+| **Agent Multi-Scope Budgets** | ✅ **Native** | ❌ No | ⚠️ Basic | ⚠️ Cloud Only |
+| **Commit-Aware Caching** | ✅ **Native** | ❌ No | ❌ No | ❌ No |
+| **Zero Silent Downgrade Guarantee** | ✅ **Yes** | ❌ No | ❌ No | ❌ No |
+| **OpenTelemetry GenAI Spans** | ✅ **Native** | ⚠️ Partial | ⚠️ Partial | ⚠️ Cloud |
+| **Multi-Provider (OpenAI/Anthropic/Gemini/DeepSeek)** | ✅ **Native** | ✅ Plugin | ✅ Proxy | ✅ Cloud |
+| **Vercel Serverless Ready** | ✅ **1-Click** | ⚠️ Complex | ❌ Python/Proxy | ❌ Cloud |
+| **100% Open-Source TypeScript** | ✅ **Yes** | ⚠️ Bulky | ❌ Python | ❌ Proprietary |
 
-Run any example directly:
-```bash
-npx ts-node examples/code-agent/basic-agent.ts
-```
+---
+
+## 💖 Sponsoring Toka
+
+Toka is an open-source initiative dedicated to democratizing cost transparency and autonomous agent safety.
+
+If Toka saved your company money or powered your product:
+- ⭐ **Star this repository** on GitHub!
+- 💖 **[Sponsor on GitHub](https://github.com/sponsors/abrehamshiferaw)** to support ongoing feature development, new model adapters, and enterprise tools.
+
+---
+
+## 🤝 Contributing
+
+Contributions are warmly welcomed! Please read our [CONTRIBUTING.md](CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) before submitting a pull request.
 
 ---
 
