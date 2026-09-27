@@ -1,6 +1,6 @@
 {
   "name": "toka-sdk",
-  "version": "2.3.0",
+  "version": "1.4.0",
   "description": "TypeScript cost-control, smart model routing, and observability architecture for LLM and AI code agents.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
